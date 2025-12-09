@@ -1,0 +1,45 @@
+1. Mount the main ISO image 'en_visual_studio_2010_express_x86_dvd_510419.iso' with Windows.
+Note: If there is no 'Mount' action in a context menu for the ISO file, then set association for the ISO file type to Windows Explorer instead of the current archive manager.
+
+2. Run the 'Setup.hta' from the mounted disk.
+
+3. Install the Visual Studio 2010 for C++ language. 
+Install all the default components, including the SQL Server and Silverlight.
+
+4. Install the Service Pack 1 for the Visual Studio 2010. 
+Run each installer from the 'VS SP1' folder.
+
+5. Install all the updates for the Visual Studio 2010 Service Pack 1. 
+Run each installer from the 'post-SP1 Updates' folder in the chronologic order, i.e. from the oldest 'KB2519378' to the newest 'KB4506161'. Some updates will not install due to some limitations.
+
+6. Ensure that all the updates are properly installed.
+
+6.1. Open the 'About' window in Visual Studio IDE: 
+Help -> About Microsoft Visual C++ 2010 Express.
+
+6.2. IDE version must be 10.0.40219.1 SP1Rel.
+
+6.3. Following updates must be listed in the 'Installed products' list:
+------------------------------------
+Microsoft Visual C++ 2010
+Hotfix for Microsoft Visual C++ 2010 Express ENU (KB2565057)
+Hotfix for Microsoft Visual C++ 2010 Express ENU (KB2635973)
+Hotfix for Microsoft Visual C++ 2010 Express ENU (KB4091346)
+Hotfix for Microsoft Visual C++ 2010 Express ENU (KB4336919)
+Hotfix for Microsoft Visual C++ 2010 Express ENU (KB4476698)
+Microsoft Visual C++ 2010 Express - ENU Service Pack 1 (KB983509)
+------------------------------------
+
+6.4. In operating system, open 'Control Panel' and ensure that versions of products are updated:
+
+6.4.1. Microsoft Visual C++ 2010 Express - ENU must have version 10.0.40219.
+
+6.4.2. The same version 10.0.40219 must be specified for all the following components:
+------------------------------------
+Microsoft Visual C++ 2010 x64 Redistributable
+Microsoft Visual C++ 2010 x64 Runtime
+Microsoft Visual C++ 2010 x86 Redistributable
+Microsoft Visual C++ 2010 x86 Runtime
+------------------------------------
+
+6.4.3. The 'Microsoft Visual Studio 2010 Service Pack 1' must be installed.

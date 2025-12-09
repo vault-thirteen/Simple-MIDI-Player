@@ -1,0 +1,13 @@
+In order to build old projects and compile old code using the old Direct Sound API in a modern Windows 10 operating system, the follwoing actions must be performed. The order of actions is important !
+
+1. Delete all the old C++ redistributables installed (2008, 2010).
+2. Delete all the DirectX SDKs.
+3. Delete all the Windows SDKs of Windows 7.
+
+4. Install the DirectX SDK released in August 2007. 
+Notes: Newer versions of SDK do not contain the DirectSound API !
+
+5. Install the Windows 7 SDK using the 'GRMSDKX_EN_DVD.iso' image.
+Notes: The version of SDK is 7.1, not the 7.0.
+
+6. Install the Visual Studio 2010, including the SP1 and all the updates.
