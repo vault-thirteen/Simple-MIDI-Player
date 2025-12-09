@@ -20,10 +20,10 @@ In order to compile this project a set of conditions must be met:
   otherwise you will see the hell.
 
 Notes on installing the required software and configuring the environment are stated in the text files:
-* [DirectSound API / Direct Sound API.txt](DirectSound API/Direct Sound API.txt)
-* [DirectSound API / Building for DirectSound API.txt](DirectSound API/Building for DirectSound API.txt)
-* [Visual Studio 2010 / How to install.txt](Visual Studio 2010/How to install.txt)
-* [Visual Studio 2010 / Versions.txt](Visual Studio 2010/Versions.txt)
+* [DirectSound API / Direct Sound API.txt]("DirectSound API/Direct Sound API.txt")
+* [DirectSound API / Building for DirectSound API.txt]("DirectSound API/Building for DirectSound API.txt")
+* [Visual Studio 2010 / How to install.txt]("Visual Studio 2010/How to install.txt")
+* [Visual Studio 2010 / Versions.txt]("Visual Studio 2010/Versions.txt")
 
 ## Usage
 To see a help information simply start the player in a command prompt without any arguments.
