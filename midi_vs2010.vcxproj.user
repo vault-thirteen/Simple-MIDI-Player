@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>1 2 - E:\Temp\1\gm_tt03.mid</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>DS -1 2 - E:\Temp\MIDI\GM-MIDI\gm_tt02.mid</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

@@ -3,8 +3,8 @@
 Simple MIDI Player.
 
 This player is able to play MIDI files using DirectSound API and WinMM library.
-DirectSound API can use the Microsoft's software synthesizer built-into the Windows operating system.
-WinMM library is able to play MIDI files on external software and hardware synthesizers.
+DirectSound API can be used for playback on all synthesizers.
+WinMM library is able to play MIDI files only on external software and hardware synthesizers.
 
 */
 
@@ -17,7 +17,7 @@ WinMM library is able to play MIDI files on external software and hardware synth
 #include <sstream>
 
 #define APP_NAME "Simple MIDI Player"
-#define APP_VER "1.0.1"
+#define APP_VER "1.0.2"
 
 const WCHAR* DIRECT_SOUND_DLL = L"dsound.dll";
 const WCHAR* WINDOWS_NT_DLL = L"ntdll.dll";
@@ -36,6 +36,7 @@ IDirectMusicSegment8* pSegment = NULL;
 IDirectMusicPort8* pPort = NULL;
 IDirectSoundBuffer* pDSBuffer = nullptr;
 BOOL isExternalSynth = FALSE;
+BOOL isSoftwareSynth = FALSE;
 
 // WinMM variables.
 std::vector<tagMIDIOUTCAPSA> midiOutDevices;
@@ -265,6 +266,7 @@ HRESULT CreateMusicPort(DMUS_PORTCAPS portCaps)
 	}
 
 	if (curPortCaps.dwFlags & DMUS_PC_SOFTWARESYNTH) {
+		isSoftwareSynth = TRUE;
 		std::cout << "Port is a software synthesizer" << std::endl;
 	}
 	else {
@@ -422,6 +424,11 @@ HRESULT Initialise(int ds_device_idx, int midi_output_device_idx, WCHAR* dls_fil
 		hr = pPerformance->AddPort(pPort);
 		if (FAILED(hr)) return hr;
 
+		for (int i = 0; i < 16; i++) {
+			hr = pPerformance->AssignPChannel(i, pPort, 0, i);
+			if (FAILED(hr)) return hr;
+		}
+
 		hr = pPort->Activate(TRUE);
 		if (FAILED(hr)) return hr;
 	}
@@ -460,68 +467,44 @@ HRESULT PlayMidi(WCHAR* midi_file_w, BOOL isExternalSynth)
 {
 	HRESULT hr;
 
-	if (isExternalSynth) {
-		// It looks like Microsoft has cut all the functions for communicating with external synthesizers.
-		// This is very sad.
-		return E_FAIL;
+	// Load MIDI file.
+	hr = pLoader->LoadObjectFromFile(CLSID_DirectMusicSegment, IID_IDirectMusicSegment8, midi_file_w, (void**)&pSegment);
+	if (FAILED(hr)) return hr;
+	if (!pSegment) {
+		std::cerr << "Segment is not loaded";
+		return -1;
 	}
-	else
-	{
-		// Load MIDI file.
-		hr = pLoader->LoadObjectFromFile(CLSID_DirectMusicSegment, IID_IDirectMusicSegment8, midi_file_w, (void**)&pSegment);
-		if (FAILED(hr)) return hr;
 
+	if ((!isExternalSynth) && (!isSoftwareSynth)) {
 		// Download instrument data to the synth (DLS)
 		hr = pSegment->Download(pPerformance);
 		if (FAILED(hr)) return hr;
-
-		if (!pSegment)
-		{
-			std::cerr << "Segment is not loaded";
-			return -1;
-		}
-
-		MUSIC_TIME segLenTicks;
-		REFERENCE_TIME segLenRT;
-		pSegment->GetLength(&segLenTicks);
-		pPerformance->MusicToReferenceTime(segLenTicks, &segLenRT);
-		DWORD prepareTimeMs;
-		pPerformance->GetPrepareTime(&prepareTimeMs);
-		REFERENCE_TIME latencyRT;
-		pPerformance->GetLatencyTime(&latencyRT);
-
-		std::cout << "Length: " << segLenTicks << " ticks, " << segLenRT << " ref. time." << std::endl;
-		std::cout << "Prepare time: " << prepareTimeMs << " ms, Latency: " << latencyRT << " ref. time." << std::endl;
-
-		// 5. Play the segment
-		/*
-		DMUS_SEGF_DEFAULT
-			Use flags embedded in the segment. This resolves the time to the segment's
-			default boundary and also causes the segment to play on its embedded
-			audiopath, if it was configured to do so in the authoring application.
-		DMUS_SEGF_AFTERPREPARETIME
-			Resolve time to a time after the prepare time. See
-			IDirectMusicPerformance8::GetPrepareTime.
-		*/
-		hr = pPerformance->PlaySegment(pSegment, DMUS_SEGF_DEFAULT | DMUS_SEGF_AFTERPREPARETIME, 0, NULL);
-		if (FAILED(hr)) return hr;
-
-		/*
-		pPerformance->PlaySegmentEx(
-			pSegment,     // Segment to play
-			NULL,         // Optional segment to fade from
-			NULL,         // Optional start time
-			DMUS_SEGF_BEAT, // Play on the next beat (standard MIDI files usually start immediately)
-			0,            // Start time (if using DMUS_SEGF_MEASURE/BEAT/GRID)
-			NULL,         // Object to receive notification
-
-			// ?
-			NULL,         // Audiopath (NULL uses default path set in InitAudio)
-
-			NULL          // Performance (for secondary performances)
-		);
-		*/
 	}
+
+	MUSIC_TIME segLenTicks;
+	REFERENCE_TIME segLenRT;
+	pSegment->GetLength(&segLenTicks);
+	pPerformance->MusicToReferenceTime(segLenTicks, &segLenRT);
+	DWORD prepareTimeMs;
+	pPerformance->GetPrepareTime(&prepareTimeMs);
+	REFERENCE_TIME latencyRT;
+	pPerformance->GetLatencyTime(&latencyRT);
+
+	std::cout << "Length: " << segLenTicks << " ticks, " << segLenRT << " ref. time." << std::endl;
+	std::cout << "Prepare time: " << prepareTimeMs << " ms, Latency: " << latencyRT << " ref. time." << std::endl;
+
+	// 5. Play the segment
+	/*
+	DMUS_SEGF_DEFAULT
+		Use flags embedded in the segment. This resolves the time to the segment's
+		default boundary and also causes the segment to play on its embedded
+		audiopath, if it was configured to do so in the authoring application.
+	DMUS_SEGF_AFTERPREPARETIME
+		Resolve time to a time after the prepare time. See
+		IDirectMusicPerformance8::GetPrepareTime.
+	*/
+	hr = pPerformance->PlaySegment(pSegment, DMUS_SEGF_DEFAULT | DMUS_SEGF_AFTERPREPARETIME, 0, NULL);
+	if (FAILED(hr)) return hr;
 
 	return S_OK;
 }
@@ -776,10 +759,11 @@ int main(int argc, char* argv[])
 		std::cout << "\tSet the DirectSound device index to a negative value to use the default device." << std::endl;
 		std::cout << "\tSet the MIDI output device index to a negative value to use the default device." << std::endl;
 		std::cout << "\tTo disable loading DLS, use the '" << convertWCharToStdStringWinAPI(DLS_FILE_NONE) << "' as DLS file." << std::endl;
-		std::cout << "\tIn the past time DirectSound API used to support great functionality, such as EAX, 3D positional audio and many other features. " <<
-			"Unfortunately, Microsoft corporation destroyed the whole API and thousands and millions of hours of many people's work when Windows Vista came out. " <<
-			"In its current state, DirectSound API does not really work with any MIDI synthesizers except the one built-into the Windows operating system. " <<
-			std::endl;
+		std::cout << "\tThis mode has a known problem. When a default MIDI output is selected (i.e. negative index), " <<
+			"the DirectSound API initialises automatically and maps MIDI channels incorrectly. " <<
+			"Automatic initialisation does not allow manual channel mapping. " <<
+			"Incorrect channel mapping results in most of the instruments lost and quiet. " <<
+			"All this means that you should not use the default MIDI output. " << std::endl;
 		std::cout << std::endl;
 
 		std::cout << "Notes for WinMM mode: " << std::endl;
@@ -788,8 +772,8 @@ int main(int argc, char* argv[])
 		std::cout << std::endl;
 
 		std::cout << "Examples: " << std::endl;
-		std::cout << "\ttool.exe DS -1 -1 gm.dls music.mid" << std::endl;
-		std::cout << "\ttool.exe DS -1 -1 - music.mid" << std::endl;
+		std::cout << "\ttool.exe DS -1 0 gm.dls music.mid" << std::endl;
+		std::cout << "\ttool.exe DS -1 0 - music.mid" << std::endl;
 		std::cout << "\ttool.exe MM 1 music.mid" << std::endl;
 		std::cout << std::endl;
 
