@@ -17,7 +17,7 @@ WinMM library is able to play MIDI files on external software and hardware synth
 #include <sstream>
 
 #define APP_NAME "Simple MIDI Player"
-#define APP_VER "1.0"
+#define APP_VER "1.0.1"
 
 const WCHAR* DIRECT_SOUND_DLL = L"dsound.dll";
 const WCHAR* WINDOWS_NT_DLL = L"ntdll.dll";
@@ -287,7 +287,7 @@ LPCGUID GetDeviceGuidByIndex(int index) {
 }
 
 DMUS_PORTCAPS GetPortCapsByIndex(int idx) {
-	DMUS_PORTCAPS emptyPortCaps;
+	DMUS_PORTCAPS emptyPortCaps = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL };
 	DMUS_PORTCAPS portCaps;
 	DWORD dwIndex = 0;
 	HRESULT hr;
@@ -400,26 +400,9 @@ HRESULT Initialise(int ds_device_idx, int midi_output_device_idx, WCHAR* dls_fil
 	if (FAILED(hr)) return hr;
 
 	if (midi_output_device_idx < 0) {
-
-		/*
-		The DMUS_APATH types are used in conjunction with CreateStandardAudioPath to
-		build default path types. _SHARED_ means the same buffer is shared across multiple
-		instantiations of the audiopath type. _DYNAMIC_ means a unique buffer is created
-		every time.
-
-		#define DMUS_APATH_SHARED_STEREOPLUSREVERB   1       // A standard music set up with stereo outs and reverb.
-		#define DMUS_APATH_DYNAMIC_3D                6       // An audio path with one dynamic bus from the synth feeding to a dynamic 3d buffer. Does not send to env reverb.
-		#define DMUS_APATH_DYNAMIC_MONO              7       // An audio path with one dynamic bus from the synth feeding to a dynamic mono buffer.
-		#define DMUS_APATH_DYNAMIC_STEREO            8       // An audio path with two dynamic buses from the synth feeding to a dynamic stereo buffer.
-		*/
 		DWORD dwDefaultPathType = DMUS_APATH_SHARED_STEREOPLUSREVERB;
-		// DMUS_APATH_SHARED_STEREOPLUSREVERB - sounds flat.
-		// DMUS_APATH_DYNAMIC_3D - sounds flat and quiet.
-		// DMUS_APATH_DYNAMIC_MONO - sounds flat.
-		// DMUS_APATH_DYNAMIC_STEREO - sounds flat and quiet.
-
-		DWORD dwPChannelCount = 16;
-		DWORD dwFlags = NULL;
+		DWORD dwPChannelCount = 64;
+		DWORD dwFlags = DMUS_AUDIOF_ALL;
 		hr = pPerformance->InitAudio(&pDirectMusicG, &pDirectSoundG, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, NULL); // Not compatible with AddPort !
 		if (FAILED(hr)) return hr;
 	}
@@ -482,7 +465,8 @@ HRESULT PlayMidi(WCHAR* midi_file_w, BOOL isExternalSynth)
 		// This is very sad.
 		return E_FAIL;
 	}
-	else {
+	else
+	{
 		// Load MIDI file.
 		hr = pLoader->LoadObjectFromFile(CLSID_DirectMusicSegment, IID_IDirectMusicSegment8, midi_file_w, (void**)&pSegment);
 		if (FAILED(hr)) return hr;
@@ -491,27 +475,52 @@ HRESULT PlayMidi(WCHAR* midi_file_w, BOOL isExternalSynth)
 		hr = pSegment->Download(pPerformance);
 		if (FAILED(hr)) return hr;
 
-		if (pPerformance && pSegment) {
-			// 5. Play the segment
-			hr = pPerformance->PlaySegment(pSegment, DMUS_SEGF_AFTERPREPARETIME, 0, NULL);
-			if (FAILED(hr)) return hr;
-
-			/*
-			pPerformance->PlaySegmentEx(
-				pSegment,     // Segment to play
-				NULL,         // Optional segment to fade from
-				NULL,         // Optional start time
-				DMUS_SEGF_BEAT, // Play on the next beat (standard MIDI files usually start immediately)
-				0,            // Start time (if using DMUS_SEGF_MEASURE/BEAT/GRID)
-				NULL,         // Object to receive notification
-
-				// ?
-				NULL,         // Audiopath (NULL uses default path set in InitAudio)
-
-				NULL          // Performance (for secondary performances)
-			);
-			*/
+		if (!pSegment)
+		{
+			std::cerr << "Segment is not loaded";
+			return -1;
 		}
+
+		MUSIC_TIME segLenTicks;
+		REFERENCE_TIME segLenRT;
+		pSegment->GetLength(&segLenTicks);
+		pPerformance->MusicToReferenceTime(segLenTicks, &segLenRT);
+		DWORD prepareTimeMs;
+		pPerformance->GetPrepareTime(&prepareTimeMs);
+		REFERENCE_TIME latencyRT;
+		pPerformance->GetLatencyTime(&latencyRT);
+
+		std::cout << "Length: " << segLenTicks << " ticks, " << segLenRT << " ref. time." << std::endl;
+		std::cout << "Prepare time: " << prepareTimeMs << " ms, Latency: " << latencyRT << " ref. time." << std::endl;
+
+		// 5. Play the segment
+		/*
+		DMUS_SEGF_DEFAULT
+			Use flags embedded in the segment. This resolves the time to the segment's
+			default boundary and also causes the segment to play on its embedded
+			audiopath, if it was configured to do so in the authoring application.
+		DMUS_SEGF_AFTERPREPARETIME
+			Resolve time to a time after the prepare time. See
+			IDirectMusicPerformance8::GetPrepareTime.
+		*/
+		hr = pPerformance->PlaySegment(pSegment, DMUS_SEGF_DEFAULT | DMUS_SEGF_AFTERPREPARETIME, 0, NULL);
+		if (FAILED(hr)) return hr;
+
+		/*
+		pPerformance->PlaySegmentEx(
+			pSegment,     // Segment to play
+			NULL,         // Optional segment to fade from
+			NULL,         // Optional start time
+			DMUS_SEGF_BEAT, // Play on the next beat (standard MIDI files usually start immediately)
+			0,            // Start time (if using DMUS_SEGF_MEASURE/BEAT/GRID)
+			NULL,         // Object to receive notification
+
+			// ?
+			NULL,         // Audiopath (NULL uses default path set in InitAudio)
+
+			NULL          // Performance (for secondary performances)
+		);
+		*/
 	}
 
 	return S_OK;
@@ -613,7 +622,7 @@ void ListMidiOutDevicesWithWinmm() {
 		midiOutDevices.push_back(caps);
 	}
 
-	for (int i = 0; i < midiOutDevices.size(); i++) {
+	for (int i = 0; i < int(midiOutDevices.size()); i++) {
 		std::cout << "[" << i << "] (" << midiOutDevices[i].wPid << ") " <<
 			midiOutDevices[i].szPname <<
 			" Drv=" << midiOutDevices[i].vDriverVersion <<
@@ -728,6 +737,8 @@ int playMidiWithWinmm(int midi_output_device_idx, char* midi_file)
 		std::cerr << "ERROR";
 		return 1;
 	}
+
+	return 0;
 }
 
 int main(int argc, char* argv[])
