@@ -1,5 +1,6 @@
 1. Mount the main ISO image 'en_visual_studio_2010_express_x86_dvd_510419.iso' with Windows.
-Note: If there is no 'Mount' action in a context menu for the ISO file, then set association for the ISO file type to Windows Explorer instead of the current archive manager.
+Note: If there is no 'Mount' action in a context menu for the ISO file, then set association
+for the ISO file type to Windows Explorer instead of the current archive manager.
 
 2. Run the 'Setup.hta' from the mounted disk.
 
@@ -10,7 +11,9 @@ Install all the default components, including the SQL Server and Silverlight.
 Run each installer from the 'VS SP1' folder.
 
 5. Install all the updates for the Visual Studio 2010 Service Pack 1. 
-Run each installer from the 'post-SP1 Updates' folder in the chronologic order, i.e. from the oldest 'KB2519378' to the newest 'KB4506161'. Some updates will not install due to some limitations.
+Run each installer from the 'post-SP1 Updates' folder in the chronologic order, i.e. from the
+oldest 'KB2519378' to the newest 'KB4506161'.
+Some updates will not install due to some limitations.
 
 6. Ensure that all the updates are properly installed.
 

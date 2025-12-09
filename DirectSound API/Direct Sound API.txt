@@ -1,4 +1,6 @@
-In order to build old projects and compile old code using the old Direct Sound API in a modern Windows 10 operating system, the follwoing actions must be performed. The order of actions is important !
+In order to build old projects and compile old code using the old Direct Sound
+API in a modern Windows 10 operating system, the follwoing actions must be
+performed. The order of actions is important !
 
 1. Delete all the old C++ redistributables installed (2008, 2010).
 2. Delete all the DirectX SDKs.
