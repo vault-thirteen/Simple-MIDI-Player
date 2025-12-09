@@ -70,7 +70,7 @@ library is still capable of playing MIDI files. This mode is used mostly for pla
 In the `DS` work mode, the player uses those remnants of the `DirectSound` API which Microsoft has not yet destroyed. 
 This mode can be used for playback on almost all synthesizers. This mode allows to use a custom DLS file by 
 specifying its path or playing MIDI music with the help of default `gm.dls` file present in modern 
-Windows 10 operating systems. If you need this file for some reason, it normally sits in the follwoing folders:
+Windows 10 operating systems. If you need this file for some reason, it normally sits in the following folders:
 * `C:\Windows\System32\drivers`
 * `C:\Windows\SysWOW64\drivers`
 
