@@ -1,0 +1,32 @@
+Instructions for building projects using the DirectSound API.
+
+0. Prepare the operating system.
+Steps are described in the 'Direct Sound API' text file.
+
+1. Configure the directories for header files. 
+Order is important !
+
+Project -> Properties -> Configuration Properties -> VC++ Directories -> Include Directories :
+---
+C:\Program Files\Microsoft SDKs\Windows\v7.1\Include
+C:\Program Files (x86)\Microsoft DirectX SDK (August 2007)\Include
+C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include
+---
+
+2. Configure the directories for .lib files. 
+Order is important !
+
+Project -> Properties -> Configuration Properties -> Linker -> General -> Additional Library Directories :
+---
+C:\Program Files\Microsoft SDKs\Windows\v7.1\Lib
+C:\Program Files (x86)\Microsoft DirectX SDK (August 2007)\Lib\x86
+C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\lib
+---
+
+3. Set links to the .lib files. 
+
+Project -> Properties -> Configuration Properties -> Linker -> Input -> Additional Dependencies :
+---
+dsound.lib
+dxguid.lib
+---
